@@ -14,7 +14,7 @@ const classMap = {
 
 const fs = require("fs");
 
-const FILE_PATH = "../DATA/SHIPS/shiparch.ini";
+const FILE_PATH = "../../DATA/SHIPS/shiparch.ini";
 let shiparchText = fs.readFileSync(FILE_PATH, { encoding: "utf-8" });
 const classMapEntries = Object.entries(classMap);
 classMapEntries.forEach(([from, to]) => {
