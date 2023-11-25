@@ -9,8 +9,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bini-lib": "^0.0.6",
     "glob": "^8.0.3",
-    "js-ini": "^1.5.1",
+    "js-ini": "^1.6.0",
     "prompt-sync": "^4.2.0"
   }
 }

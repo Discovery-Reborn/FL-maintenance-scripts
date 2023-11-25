@@ -3,6 +3,10 @@ const fsPromises = require('fs').promises;
 const fs = require('fs');
 const ini = require('js-ini');
 
+const iniParseConfig = {
+    keyMergeStrategy: "join-to-array"
+}
+
 function padNum(number, pad) {
     return String(number).padStart(pad, '0');
 }
@@ -47,28 +51,36 @@ async function getIniFiles(folderPath, globOptions) {
     })
 }
 
-async function getSectionsFromIni(filePath, ...sectionNames) {
+async function getSectionObjectsFromIni(filePath, ...sectionNames) {
     const text = await fsPromises.readFile(filePath, 'utf-8');
     const sections = [];
     text.split(/(^\[)/gm).forEach(section => {
-        if (section && section !== "[") {
-            const parsed = ini.parse("["+section);
+        if (section && section !== "[" && !section.startsWith(";")) {
+            const parsed = ini.parse("["+section, iniParseConfig);
             if (sectionNames.length > 0) {
                 sectionNames.forEach(secName => {
                     if (secName in parsed) {
-                        sections.push(parsed[secName]);
+                        sections.push(parsed);
                     }
                 });
             } else {
-                sections.push(Object.values(parsed)[0]);
+                sections.push(parsed);
             }
         }
     })
-    return sections;
+    getSectionsFromIni.asFullSections = () => {
+        return sections;
+    }
+    return sections
 }
 
-async function getSystemFiles(excludeSystems) {
-    let systemFiles = await getIniFiles("../DATA/UNIVERSE/SYSTEMS/*");
+async function getSectionsFromIni(filePath, ...sectionNames) {
+    return (await getSectionObjectsFromIni(filePath, ...sectionNames)).map(s => Object.values(s)[0]);
+}
+
+
+async function getSystemFiles(excludeSystems, overridePath) {
+    let systemFiles = await getIniFiles(overridePath ?? "../DATA/UNIVERSE/SYSTEMS/*");
     if (excludeSystems && excludeSystems.length > 0) {
         systemFiles = systemFiles
             .filter(file => 
@@ -95,12 +107,22 @@ async function writeListToFile(fileName, list) {
     }
 }
 
+function writeIniFile(filePath, sections) {
+    const stringifiedSections = [];
+    sections.forEach(section => {
+        stringifiedSections.push(ini.stringify(section));
+    })
+    fs.writeFileSync(filePath, stringifiedSections.join('\n\n'));
+}
+
 module.exports = {
     padNum,
     printProgress,
     getCommonArgs,
     getIniFiles,
     getSectionsFromIni,
+    getSectionObjectsFromIni,
     getSystemFiles,
-    writeListToFile
+    writeListToFile,
+    writeIniFile
 }
