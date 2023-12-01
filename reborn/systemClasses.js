@@ -32,10 +32,10 @@ class Zone {
             const nonEncounters = section.entries.filter(e => e.name !== "encounter" && e.name !== "faction");
             applySectionValues(this, nonEncounters);
             this.encounters = [];
-            let currentEncounter = {};
+            let currentEncounter = undefined;
             section.entries.forEach(entry => {
                 if (entry.name === "encounter") {
-                    if (currentEncounter !== {}) {
+                    if (currentEncounter) {
                         this.encounters.push(currentEncounter);
                     }
                     currentEncounter = {
@@ -46,13 +46,13 @@ class Zone {
                     }
                 }
                 if (entry.name === "faction") {
-                    currentEncounter.factions.push([{
+                    currentEncounter.factions.push({
                         nickname: entry.values[0],
                         density: entry.values[1]
-                    }]);
+                    });
                 }
             });
-            if (currentEncounter !== {}) {
+            if (currentEncounter) {
                 this.encounters.push(currentEncounter);
             }
         }

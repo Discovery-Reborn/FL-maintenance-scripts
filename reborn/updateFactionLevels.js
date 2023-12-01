@@ -17,36 +17,38 @@ const specialKeys = Object.keys(specials);
 async function updateFactionLevels() {
     const systemFiles = await getSystemFiles(['intro', 'iw09']);
     const factionProps = await getSectionsFromIni("../DATA/MISSIONS/faction_prop.ini", "FactionProps");
-    console.log(factionProps);
     for (const file of systemFiles) {
         const fileContent = await fsAsync.readFile(file, "utf-8");
         if (fileContent) {
             const sysIni = IniFile.fromString(file, fileContent);
-            const zones = sysIni.sections.filter(s => s.name === "zone");
-            for (let zoneSection of zones) {
-                const zone = new Zone(zoneSection);
-                zone.encounters.forEach(enc => {
-                    const factionNames = enc.factions.map(f => f.nickname);
-                    const relFactionProps = factionProps.filter(f => factionNames.includes(f.affiliation));
-                    for (const fp of relFactionProps) {
-                        if (specialKeys.includes(fp.affiliation)) {
-                            enc.level = specials[fp.affiliation];
-                            break;
-                        }
-                        if (fp.legality === "lawful") {
-                            enc.level = 17;
-                            break;
-                        }
-                        if (fp.legality === "unlawful") {
-                            enc.level = 19;
-                            break;
+            for (let i = 0; i < sysIni.sections.length; i++) {
+                if (sysIni.sections[i].name === "zone") {
+                    const zoneSection = sysIni.sections[i];
+                    const zone = new Zone(zoneSection);
+                    for (let j=0; j<zone.encounters.length; j++) {
+                        const enc = zone.encounters[j];
+                        const factionNames = enc.factions.map(f => f.nickname);
+                        const relFactionProps = factionProps.filter(f => factionNames.includes(f.affiliation));
+                        for (const fp of relFactionProps) {
+                            if (specialKeys.includes(fp.affiliation)) {
+                                enc.level = specials[fp.affiliation];
+                                break;
+                            }
+                            if (fp.legality === "lawful") {
+                                enc.level = 17;
+                                break;
+                            }
+                            if (fp.legality === "unlawful") {
+                                enc.level = 19;
+                                break;
+                            }
                         }
                     }
-                })
-                zoneSection = zone.toSection();
+                    sysIni.sections[i] = zone.toSection();
+                }
             }
             const fileString = sysIni.toString();
-            await fsAsync.writeFile("res_"+file, fileString);
+            await fsAsync.writeFile(file + ".temp", fileString);
         }
     }
 }
